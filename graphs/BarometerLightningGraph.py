@@ -1,8 +1,8 @@
-# BarometerLightningGraph 
+# BarometerLightningGraph
 # filename: BarometerLightningGraph.py
-# Version 1.1 03/30/15 
+# Version 1.1 03/30/15
 #
-# contains graphing code 
+# contains graphing code
 #
 #
 
@@ -22,116 +22,107 @@ from matplotlib import dates
 
 import pylab
 
-import MySQLdb as mdb
-
 # Check for user imports
 try:
-        import conflocal as config
+    import conflocal as config
 except ImportError:
-        import config
+    import config
 
+if (config.enable_MySQL_Logging == True):
+    if (sys.version_info >= (3, 0)):
+        import pymysql as mdb
+    else:
+        import MySQLdb as mdb
 
 def  BarometerLightningGraph(source,days,delay):
+    print ("BarometerLightningGraph source:%s days:%s" % (source,days))
+    print ("sleeping seconds:", delay)
+    time.sleep(delay)
+    print ("BarometerLightningGraph running now")
+	# now we have get the data, stuff it in the graph
+    try:
+        print("trying database")
+        db = mdb.connect('localhost', 'root', config.MySQL_Password, 'SkyWeather');
 
+        cursor = db.cursor()
 
-	
-	print("BarometerLightningGraph source:%s days:%s" % (source,days))
-	print("sleeping seconds:", delay)
-	time.sleep(delay)
-	print("BarometerLightningGraph running now")
+        query = "SELECT TimeStamp, bmp180SeaLevel, as3935LastInterrupt, as3935LastDistance FROM WeatherData where  now() - interval %i hour < TimeStamp" % (days*24)
+        print ("query=", query)
+        cursor.execute(query)
+        result = cursor.fetchall()
 
+        t = []
+        s = []
+        u = []
+        v = []
 
-	# now we have get the data, stuff it in the graph 
+        for record in result:
+            t.append(record[0])
+            s.append(record[1])
+            u.append(record[2])
+            v.append(record[3])
 
-	try:
-		print("trying database")
-    		db = mdb.connect('localhost', 'root', config.MySQL_Password, 'SkyWeather');
+        fig = pyplot.figure()
 
-    		cursor = db.cursor()
+        print ("count of t=",len(t))
+        if (len(t) == 0):
+            return
+        # dts = map(datetime.datetime.fromtimestamp, s)
+        # fds = dates.date2num(t) # converted
+        # matplotlib date format object
+        hfmt = dates.DateFormatter('%m/%d-%H')
 
-		query = "SELECT TimeStamp, bmp180SeaLevel, as3935LastInterrupt, as3935LastDistance FROM WeatherData where  now() - interval %i hour < TimeStamp" % (days*24)
-		print "query=", query
-		cursor.execute(query)
-		result = cursor.fetchall()
-		
-		t = []
-		s = []
-		u = []
-		v = []
+        ax = fig.add_subplot(111)
+        for i in range(len(s)):
+            s[i] = s[i]
 
-		for record in result:
-  			t.append(record[0])
-  			s.append(record[1])
-  			u.append(record[2])
-  			v.append(record[3])
-		
-		
-		fig = pyplot.figure()
+        #ax.vlines(fds, -200.0, 1000.0,colors='w')
+        ax.xaxis.set_major_locator(dates.HourLocator(interval=6))
+        ax.xaxis.set_major_formatter(hfmt)
+        pylab.xticks(rotation='vertical')
 
-                print ("count of t=",len(t))
-		if (len(t) == 0):
-			return	
-		#dts = map(datetime.datetime.fromtimestamp, s)
-		#fds = dates.date2num(t) # converted
-		# matplotlib date format object
-		hfmt = dates.DateFormatter('%m/%d-%H')
+        pyplot.subplots_adjust(bottom=.3)
+        pylab.plot(t, s, color='b',label="Barometric Pressure (mb) ",linestyle="-",marker=".")
+        pylab.xlabel("Hours")
+        pylab.ylabel("millibars")
+        pylab.legend(loc='upper left')
+        pylab.axis([min(t), max(t), 900, 1100])
+        ax2 = pylab.twinx()
+        pylab.ylabel("Last Interrupt / Distance ")
 
-		
-		ax = fig.add_subplot(111)
-		for i in range(len(s)):
-			s[i] = s[i] 
-		
-                #ax.vlines(fds, -200.0, 1000.0,colors='w')
-                ax.xaxis.set_major_locator(dates.HourLocator(interval=6))
-		ax.xaxis.set_major_formatter(hfmt)
-		pylab.xticks(rotation='vertical')
+        # scale array
+        for i in range(len(v)):
+            v[i] = v[i] * 10
+        for i in range(len(u)):
+            u[i] = u[i] * 10
 
-		pyplot.subplots_adjust(bottom=.3)
-		pylab.plot(t, s, color='b',label="Barometric Pressure (mb) ",linestyle="-",marker=".")
-		pylab.xlabel("Hours")
-		pylab.ylabel("millibars")
-		pylab.legend(loc='upper left')
-		pylab.axis([min(t), max(t), 900, 1100])
-		ax2 = pylab.twinx()
-		pylab.ylabel("Last Interrupt / Distance ")
+        pylab.plot(t, u, color='y',label="as3935 Last Interrupt",linestyle="-",marker=".")
+        pylab.plot(t, v, color='r',label="as3935 Last Distance",linestyle="-",marker=".")
+        pylab.axis([min(t), max(t), 0, max(u)])
+        pylab.legend(loc='lower left')
+        pylab.figtext(.5, .05, ("Barometer and Lightning Statistics Last %i Days" % days),fontsize=18,ha='center')
 
-		# scale array
+        #pylab.grid(True)
+        pyplot.setp( ax.xaxis.get_majorticklabels(), rotation=70)
+        ax.xaxis.set_major_formatter(dates.DateFormatter('%m/%d-%H'))
+        pyplot.show()
+        pyplot.savefig("/home/pi/SDL_Pi_SkyWeather/static/BarometerLightningGraph.png")	
 
-		for i in range(len(v)):
-			v[i] = v[i] * 10
-		for i in range(len(u)):
-			u[i] = u[i] * 10
-		
+    #except mdb.Error, e: # Python 3...
+    except MySQLdb.Error:
+        e = sys.exc_info()[1]
+        print ("Error %d: %s" % (e.args[0],e.args[1]))
 
-		pylab.plot(t, u, color='y',label="as3935 Last Interrupt",linestyle="-",marker=".")
-		pylab.plot(t, v, color='r',label="as3935 Last Distance",linestyle="-",marker=".")
-		pylab.axis([min(t), max(t), 0, max(u)])
-		pylab.legend(loc='lower left')
-		pylab.figtext(.5, .05, ("Barometer and Lightning Statistics Last %i Days" % days),fontsize=18,ha='center')
+    finally:
+        cursor.close()
+        db.close()
 
-		#pylab.grid(True)
+        del cursor
+        del db
 
-		pyplot.setp( ax.xaxis.get_majorticklabels(), rotation=70)
-		ax.xaxis.set_major_formatter(dates.DateFormatter('%m/%d-%H'))
-		pyplot.show()
-		pyplot.savefig("/home/pi/SDL_Pi_SkyWeather/static/BarometerLightningGraph.png")	
-
-		
-	except mdb.Error, e:
-  
-    		print "Error %d: %s" % (e.args[0],e.args[1])
-    
-	finally:    
-
-		cursor.close()       	 
-        	db.close()
-
-		del cursor
-		del db
-
-		fig.clf()
-		pyplot.close()
-		pylab.close()
-		del t, s, u, v 
-		gc.collect()
-		print("BarometerLightningGraph finished now")
+        fig.clf()
+        pyplot.close()
+        pylab.close()
+        del t, s, u, v
+        gc.collect()
+        print ("BarometerLightningGraph finished now")

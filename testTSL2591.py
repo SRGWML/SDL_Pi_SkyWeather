@@ -1,15 +1,11 @@
 import sys
 sys.path.append('./TSL2591')
 
-
 import time
 import sys
 sys.path.append('./SDL_Pi_TCA9545')
 
 import SDL_Pi_TCA9545
-
-
-
 
 ################
 # TCA9545 I2C Mux 
@@ -37,14 +33,13 @@ TCA9545_CONFIG_BUS3  =                (0x08)  # 1 = enable, 0 = disable
 try:
         tca9545 = SDL_Pi_TCA9545.SDL_Pi_TCA9545(addr=TCA9545_ADDRESS, bus_enable = TCA9545_CONFIG_BUS0)
 
-
         # turn I2CBus 3 on
         tca9545.write_control_register(TCA9545_CONFIG_BUS3)
         TCA9545_I2CMux_Present = True
 except:
-        print ">>>>>>>>>>>>>>>>>>><<<<<<<<<<<"
-        print "TCA9545 I2C Mux Not Present" 
-        print ">>>>>>>>>>>>>>>>>>><<<<<<<<<<<"
+        print (">>>>>>>>>>>>>>>>>>><<<<<<<<<<<")
+        print ("TCA9545 I2C Mux Not Present")
+        print (">>>>>>>>>>>>>>>>>>><<<<<<<<<<<")
 
 import TSL2591 
 

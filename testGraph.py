@@ -1,4 +1,3 @@
-
 #
 # calculate all graphs
 #
@@ -7,12 +6,6 @@
 import sys
 sys.path.append("./graphs")
 
-
-
-
-
 import TemperatureHumidityGraph 
 
-
 TemperatureHumidityGraph.TemperatureHumidityGraph('test', 10, 0)
-

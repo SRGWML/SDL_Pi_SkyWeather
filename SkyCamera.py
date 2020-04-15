@@ -1,30 +1,34 @@
-
 import requests
-import time 
+import time
 import picamera
 import state
+import sys
 
 import hashlib
 
-
+# FTP module required for FTP upload to WeatherUnderground
+from ftplib import FTP
 
 from PIL import ImageFont, ImageDraw, Image
 import traceback
 import util
 import datetime as dt
 
-
 # Check for user imports
 try:
-            import conflocal as config
+    import conflocal as config
 except ImportError:
-            import config
+    import config
 
 def SkyWeatherKeyGeneration(userKey):
 
     catkey = "AZWqNqDMhvK8Lhbb2jtk1bucj0s2lqZ6" +userKey
 
-    md5result = hashlib.md5(catkey)
+    if (sys.version_info >= (3, 0)):
+        message = catkey.encode()
+        md5result = hashlib.md5(message)
+    else:
+        md5result = hashlib.md5(catkey)
     #print ("hashkey =", md5result.hexdigest())
     return md5result.hexdigest()
 
@@ -48,9 +52,9 @@ def takeSkyPicture():
 
         # now add timestamp to jpeg
         pil_im = Image.open('static/skycamera.jpg')
-      
+
         draw = ImageDraw.Draw(pil_im)
-        
+
         # Choose a font
         font = ImageFont.truetype("/usr/share/fonts/truetype/freefont/FreeSans.ttf", 25)
 
@@ -77,7 +81,7 @@ def takeSkyPicture():
 
         # create image with correct size and black background
         button_img = Image.new('RGBA', button_size, "black")
-     
+
         # put text on button with 10px margins
         button_draw = ImageDraw.Draw(button_img)
         button_draw.text((10, 5), myText, fill = color, font=font)
@@ -85,7 +89,7 @@ def takeSkyPicture():
         # put button on source image in position (0, 0)
 
         pil_im.paste(button_img, (0, 0))
-        bg_w, bg_h = pil_im.size 
+        bg_w, bg_h = pil_im.size
         # WeatherSTEM logo in lower left
         size = 64
         WSLimg = Image.open("static/WeatherSTEMLogoSkyBackground.png")
@@ -98,18 +102,17 @@ def takeSkyPicture():
         pil_im.paste(SWLimg, (bg_w-size, bg_h-size))
 
         # Save the image
-        pil_im.save('static/skycamera.jpg', format= 'JPEG')
+        # pil_im.save('static/skycamera.jpg', format= 'JPEG')
         pil_im.save('static/skycameraprocessed.jpg', format= 'JPEG')
 
         time.sleep(2)
 
     except:
             if (config.SWDEBUG):
-                print(traceback.format_exc()) 
+                print(traceback.format_exc())
                 print ("--------------------")
                 print ("SkyCam Picture Failed")
                 print ("--------------------")
-
 
     finally:
         try:
@@ -120,23 +123,58 @@ def takeSkyPicture():
                 print ("SkyCam Close Failed ")
                 print ("--------------------")
 
-
     if (config.USEWEATHERSTEM == True):
         sendSkyWeather()
 
+    # if WeatherUnderground_Camera is enabled in the configuration file
+    if (config.WeatherUnderground_Camera == True):
+        sendWeatherUndergroundCamera()
 
 import base64
 
+def sendWeatherUndergroundCamera():
+    # Default filename used/required by WeatherUnderground
+    wu_filename = config.WeatherUnderground_CameraImage
+    # Open the processed image containing met data
+    # wu_image = Image.open('static/skycamera.jpg')
+    wu_image = Image.open('static/skycameraprocessed.jpg')
+    # Resize the image as to conform to WeatherUnderground 150kb limit
+    WU_MAXSIZE = (1600, 900)
+    wu_image.thumbnail(WU_MAXSIZE)
+    # Save to the filename used/required by WeatherUnderground
+    # wu_image.save(wu_filename,optimize=True,quality=95)
+    wu_image.save(wu_filename)
+    try:
+        # Establish the connection the the WeatherUnderground FTP server
+        ftp = FTP()
+        ftp.connect(host=config.WeatherUnderground_CameraServer)
+        ftp.login(user=config.WeatherUnderground_CameraUsername, passwd=config.WeatherUnderground_CameraPassword)
+        # Optional to display the FTP welcome message from the WeatherUnderground server
+        # print(ftp.getwelcome())
+        # Open the file to be uploaded
+        fh = open(wu_filename, 'rb')
+        # Upload the image to the FTP server
+        ftp.storbinary('STOR image.jpg', fh, 1024)
+        # Close the FTP session
+        ftp.quit()
+        # Close the file
+        fh.close()
+        print ("WeatherUnderground image uploaded")
+
+    except FTP.all_errors as e:
+        print('FTP error:', e)
+        # Close the FTP session
+        ftp.quit()
+        # Close the file
+        fh.close()
 
 def sendSkyWeather():
 
-    # defining the api-endpoint  
+    # defining the api-endpoint
     API_ENDPOINT = "https://skyweather.weatherstem.com/"
-     
-  
 
-    with open("static/skycamera.jpg", "rb") as image_file:
-       encoded_string = base64.b64encode(image_file.read())
+    with open("static/skycameraprocessed.jpg", "rb") as image_file:
+        encoded_string = base64.b64encode(image_file.read())
 
     if (config.SWDEBUG):
         print ("--------------------")
@@ -147,9 +185,8 @@ def sendSkyWeather():
         bptrendvalue = "Rising"
     else:
         bptrendvalue = "Falling"
-   
-    currentTime = time.time()
 
+    currentTime = time.time()
 
     data = {
                 "SkyWeatherVersion": config.SWVERSION,
@@ -162,7 +199,6 @@ def sendSkyWeather():
 	},
 	"utc":currentTime,
 	"sensors":[
-
 
 		{
 			"name":"OutsideTemperature",
@@ -288,8 +324,8 @@ def sendSkyWeather():
 			"value": state.batteryCurrent,
                         "units" : "ma"
 		},
-		{ 
-                        "name":"SolarVoltage", 
+		{
+                        "name":"SolarVoltage",
                         "value": state.solarVoltage,
                         "units" : "V"
                 },
@@ -298,7 +334,7 @@ def sendSkyWeather():
 			"value": state.solarCurrent,
                         "units" : "ma"
 
-		}, 
+		},
                 {
 			"name":"LoadVoltage",
 			"value": state.loadVoltage,
@@ -395,15 +431,11 @@ def sendSkyWeather():
     }
 
 
-  
-    # sending post request and saving response as response object 
-    r = requests.post(url = API_ENDPOINT, json = data) 
-    #print data 
-    # extracting response text  
-    pastebin_url = r.text 
+
+    # sending post request and saving response as response object
+    r = requests.post(url = API_ENDPOINT, json = data)
+    #print data
+    # extracting response text
+    pastebin_url = r.text
     if (config.SWDEBUG):
-        print("The pastebin URL is (r.text):%s"%pastebin_url) 
-
-
-
-        
+        print("The pastebin URL is (r.text):%s"%pastebin_url)
