@@ -1,7 +1,7 @@
 #
 #
 # SDL_Pi_GrovePowerDrive
-# Raspberry Pi Driver for the SwitchDoc Labs GrovePowerDrive 
+# Raspberry Pi Driver for the SwitchDoc Labs GrovePowerDrive
 #
 # SwitchDoc Labs
 # April  2017
@@ -14,27 +14,20 @@ GrovePowerDrive_Default_GPIO_Pin_Sig1 = 20
 GrovePowerDrive_Default_GPIO_Pin_Sig2 = 21
 
 class SDL_Pi_GrovePowerDrive:
-	
-	def __init__(self, GPIOPinSig1=GrovePowerDrive_Default_GPIO_Pin_Sig1, GPIOPinSig2=GrovePowerDrive_Default_GPIO_Pin_Sig2,  initialStateSig1 = True, initialStateSig2 = True):
-                self._GPIOPinSig1 = GPIOPinSig1
-                self._GPIOPinSig2 = GPIOPinSig2
+    def __init__(self, GPIOPinSig1=GrovePowerDrive_Default_GPIO_Pin_Sig1, GPIOPinSig2=GrovePowerDrive_Default_GPIO_Pin_Sig2,  initialStateSig1 = True, initialStateSig2 = True):
+        self._GPIOPinSig1 = GPIOPinSig1
+        self._GPIOPinSig2 = GPIOPinSig2
 
-                self._initialStateSig1 = initialStateSig1
-                self._initialStateSig2 = initialStateSig2
-		
-		GPIO.setmode(GPIO.BCM)
+        self._initialStateSig1 = initialStateSig1
+        self._initialStateSig2 = initialStateSig2
 
-		GPIO.setup(self._GPIOPinSig1,GPIO.OUT, initial=self._initialStateSig1)
-		GPIO.setup(self._GPIOPinSig2,GPIO.OUT, initial=self._initialStateSig1)
+        GPIO.setmode(GPIO.BCM)
 
-	def setPowerDrive(self, sigvalue, value):
+        GPIO.setup(self._GPIOPinSig1,GPIO.OUT, initial=self._initialStateSig1)
+        GPIO.setup(self._GPIOPinSig2,GPIO.OUT, initial=self._initialStateSig1)
 
-		if (sigvalue == 1):
-			GPIO.output(self._GPIOPinSig1, value)
-		if (sigvalue == 2):
-			GPIO.output(self._GPIOPinSig2, value)
-
-
-
-		
-		
+    def setPowerDrive(self, sigvalue, value):
+        if (sigvalue == 1):
+            GPIO.output(self._GPIOPinSig1, value)
+        if (sigvalue == 2):
+            GPIO.output(self._GPIOPinSig2, value)
