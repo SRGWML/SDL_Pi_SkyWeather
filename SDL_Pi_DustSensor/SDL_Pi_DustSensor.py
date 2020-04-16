@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-#SwithchDoc Labs September 2018
+# SwithchDoc Labs September 2018
 # modified from PPD42NS.py
 # Public Domain
 
@@ -43,7 +43,7 @@ class SDL_Pi_DustSensor:
       # For proper calibration readings should be made over
       # 30 second intervals.
       # Returns a tuple of gpio, percentage, and concentration.
-      
+
       interval = self._low_ticks + self._high_ticks
 
       if interval > 0:
