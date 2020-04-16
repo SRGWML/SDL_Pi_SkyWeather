@@ -1,4 +1,3 @@
-
 #
 #
 # configuration file - contains customization for SkyWeather system
@@ -9,11 +8,11 @@
 SWDEBUG = False
 
 SWVERSION = "000" # set in SkyWeather.py
-import uuid 
-  
-# printing the value of unique MAC 
-# address using uuid and getnode() function  
-MACADDRESS = hex(uuid.getnode()) 
+import uuid
+
+# printing the value of unique MAC
+# address using uuid and getnode() function
+MACADDRESS = hex(uuid.getnode())
 
 mailUser = "yourusename"
 mailPassword = "yourmailpassword"
@@ -54,18 +53,26 @@ STATIONMAC = MACADDRESS
 STATIONKEY="XXXXYYYY"
 STATIONHARDWARE=""
 
-
 # WeatherUnderground Station
 
 WeatherUnderground_Present = False
 WeatherUnderground_StationID = "KWXXXXX"
 WeatherUnderground_StationKey = "YYYYYYY"
 
+# WeatherUnderground Camera
+# Add-on to upload camera image to WeatherUndergroun webcam/camera station
+
+WeatherUnderground_Camera= False
+WeatherUnderground_CameraServer = "webcam.wunderground.com"
+WeatherUnderground_CameraUsername = "username"
+WeatherUnderground_CameraPassword = "password"
+WeatherUnderground_CameraImage = 'static/image.jpg'
+
 ############
 # Blynk configuration
 ############
 
-USEBLYNK = False 
+USEBLYNK = False
 BLYNK_AUTH = 'xxxxx'
 BLYNK_URL = 'http://blynk-cloud.com/'
 
@@ -75,14 +82,11 @@ BLYNK_URL = 'http://blynk-cloud.com/'
 # format: [NoiseFLoor, Indoor, TuneCap, DisturberDetection, WatchDogThreshold, SpikeDetection]
 AS3935_Lightning_Config = [2,1,3,0,3,3]
 
-
-
 # for barometeric pressure - needed to calculate sealevel equivalent - set your weatherstation elevation here
 
 BMP280_Altitude_Meters = 328.0
 
 # device present global variables
-
 
 Camera_Present = False
 TCA9545_I2CMux_Present = False
@@ -101,11 +105,12 @@ OLED_Originally_Present = False
 WXLink_Present = False
 Sunlight_Present = False
 TSL2591_Present = False
+# DustSensor - Connection validation not performed
+# True must be set if it is present!
 DustSensor_Present = True
 
 # set Sunlight High Gain (indoors - 1) or Low Gain (outdoors - 0)
 Sunlight_Gain = 0
-
 
 # if the WXLink has stopped transmitting, == False
 WXLink_Data_Fresh = False
@@ -117,17 +122,15 @@ pixelPin = 21
 DustSensorPin = 19
 DustSensorPowerPin = 26
 
-#WeatherRack 
+#WeatherRack
 anemometerPin = 20
 rainPin = 13
-
 
 SHT30GSPIN = 6
 AM2315GSPIN = 6
 
 # for fan
 GPIO_Pin_PowerDrive_Sig1 = 5
-GPIO_Pin_PowerDrive_Sig2 = 5     # To avoid stepping on GPIO 6 
+GPIO_Pin_PowerDrive_Sig2 = 5     # To avoid stepping on GPIO 6
 
 WATCHDOGTRIGGER = 4
-
