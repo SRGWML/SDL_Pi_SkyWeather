@@ -159,7 +159,7 @@ class SDL_Pi_SI1145(object):
                 self._logger = logging.getLogger('SI1145')
 
                 # Create I2C device.
-                self._device = smbus.SMBus(1) 
+                self._device = smbus.SMBus(1)
 
                 #reset device
                 self._reset()
@@ -218,7 +218,7 @@ class SDL_Pi_SI1145(object):
                 # Fastest clocks, clock div 1
                 if (indoor == 1):
                     self.writeParam(SI1145_PARAM_PSADCGAIN, 1)
-                else: 
+                else:
                     #self.writeParam(SI1145_PARAM_PSADCGAIN, 4)
                     self.writeParam(SI1145_PARAM_PSADCGAIN, 0)
 
@@ -266,20 +266,19 @@ class SDL_Pi_SI1145(object):
 	# apply additional calibration of /10 based on sunlight
         def readUV(self):
                 data = self._device.read_i2c_block_data(SI1145_ADDR,0x2C,2)
-		return (data[1] * 256 + data[0])/10
+                return (data[1] * 256 + data[0])/10
 
         #returns visible + IR light levels
         def readVisible(self):
                 data =  self._device.read_i2c_block_data(SI1145_ADDR,0x22,2)
-		return data[1] * 256 + data[0]
+                return data[1] * 256 + data[0]
 
         #returns IR light levels
         def readIR(self):
                 data = self._device.read_i2c_block_data(SI1145_ADDR,0x24,2)
-		return data[1] * 256 + data[0]
+                return data[1] * 256 + data[0]
 
         # Returns "Proximity" - assumes an IR LED is attached to LED
         def readProx(self):
                 data = self._device.read_i2c_block_data(SI1145_ADDR,0x26,2)
-		return data[1] * 256 + data[0]
-
+                return data[1] * 256 + data[0]

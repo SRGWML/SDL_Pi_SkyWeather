@@ -601,7 +601,9 @@ def initializeOLED():
         config.OLED_Originally_Present = False
         config.OLED_Present = False
 
-################
+# ###############
+# AS3935 - Thunderboard processing
+# ###############
 
 def process_as3935_interrupt():
     global as3935Interrupt
@@ -979,7 +981,7 @@ def sampleWeather():
                         outsideHumidity =  0.0
 
                 print ("Bad data from WXLink, discarded new data. Kept old")
-        
+
     print ("-----------------")
 
     if (config.BMP280_Present):
@@ -1577,7 +1579,7 @@ def killLogger():
 
 def updateRain():
     global lastRainReading, rain60Minutes
-    addRainToArray(totalRain - lastRainReading) 
+    addRainToArray(totalRain - lastRainReading)
     rain60Minutes = totalRainArray()
     lastRainReading = totalRain
 
@@ -1760,7 +1762,7 @@ scheduler.add_job(WLAN_check, 'interval', seconds=30*60)
 
 # every 5 days at 00:04, reboot
 scheduler.add_job(rebootPi, 'cron', day='5-30/5', hour=0, minute=4, args=["5 day Reboot"])
-    
+
 #check for Barometric Trend (every 15 minutes)
 scheduler.add_job(barometricTrend, 'interval', seconds=15*60)
 
