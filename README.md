@@ -1,186 +1,121 @@
-SkyWeather Libraries and Examples for Raspberry Pi Solar Powered Weather Station<BR>
+<p><b>Code in this github fork has been modified/updated from the origin to support Python3 and add functionality.</b></p>
 
-Supports SwitchDoc Labs WeatherRack PiWeather Board <BR> 
+<p><b>Fork is based on most recent code from origin available on 2020-04-15.</b></p>
 
-All documentation is on:<BR>
+<p><b>Below are instuctions for staging Raspbian, or other Ubuntu/Debian based distributions, for executing SkyWeather. Additionally instructions available from the fork origin for executing SkyWeather have been updated at the bottom of this file.</b></p>
 
-https://shop.switchdoc.com/products/skyweather-raspberry-pi-based-weather-station-kit-for-the-cloud
+---
 
-December 15, 2019: Version 055 - MySQL SolarMAX Fixes
+<p><b>The below instructions are valid for Raspbian and Ubuntu. If you are not comfortable with using the terminal please revert to writing one of the available SD card image files to bootable media.</b></p>
 
+<p><b>The below code will install all packages needed to run the SkyWeather code using Python 2.7 OR Python 3. If your wish is to use Python 3 only please omit all python-* packages and pip install* commands (i.e. Only install python3 packages and run pip3 commands).</b></p>
 
-http://www.switchdoc.com/<BR>
-
-
-November 27, 2019: Version 054 - Fixed reporting of SolarMAX inside temperature/humidity
-November 26, 2019: Version 053 - Update Blynk with latest SolarMAX Packet Status
-November 2, 2019: Version 052 - Fixed WeatherUnderground URL and Added more debug for LoRa WXLink 
-October 15, 2019: Version 051 - Added support for SolarMAX Lead Acid - Must update conflocal.py if used<BR>
 <pre>
-@@ -42,6 +42,10 @@ runLEDs = False
- SolarMAX_Present = False
- Dual_MAX_WXLink = False
- 
-+# SolarMAX_Type = "LEAD" for SolarMAX Lead Acid
-+# SolarMAX_Type = "LIPO" for SolarMAX LiPo
-+SolarMAX_Type = ""
-+
 
-</pre><BR>
-October 14, 2019: Version 050 - Fixed Camera Detection on Buster<BR>
-October 12, 2019:   Version 049 - Fixed BlynkBug / AM2315 Bug <BR>
-September 29, 2019: Version 048 - Fixed SolarMAX bug <BR>
-September 1, 2019: Version 047 - Fixed to Camera Exposure, Minor tweak to WeatherSTEM Interface and SolarMAX (added Version)<BR>
-August 19, 2019: Version 046 - Minor Bug release (matplotlib, SolarMAX, blynk)<BR>
-August 14, 2019: Version 045 - Camera Debug Support - SolarMAX support - Must update conflocal.py<BR>
-August 12, 2019: Version 044 - Camera Debug Support - Overexposure problem<BR>
-August 8, 2019:  Version 043 - Improved AM2315 Detection, SQL Structure Fixed, time and date changed, debug for overexposure <BR>
-August 6, 2019:  Version 042 - Overlays, Lightning Params added - Must update conflocal.py if used<BR>
-July 27, 2019:   Version 041 - Fix to SHT30 for > 122 degrees <BR>
-July 8, 2019:    Version 040 - WeatherUnderground Fix, Support for SHT30- Must update conflocal.py if used<BR>
-June 5, 2019:    Version 039 - AM2315 Reliablity Fix <BR>
-May 21, 2019:    Version 038 - Blynk Bug Fix<BR>
-May 21, 2019:    Version 037 - Blynk Changes / Bug Fix<BR>
-May 20, 2019:    Version 036 - Fixed Barometric Pressure Reporting<BR>
-May 12, 2019:    Version 035 - Debug Statements removed<BR>
-May 4, 2019:     Version 034 - WeatherSTEM testing Version<BR>
-May 1, 2019:     Version 033 - WeatherSTEM API Started<BR>
-April 29, 2019:  Version 033 - WeatherSTEM Modification<BR>
-April 28, 2019:  Version 032 - Improved MySQL Reporting<BR>
-April 28, 2019:  Version 031 - Fixed WXLink Temperature Reporting<BR>
-April 27, 2019:  Version 030 - Modified test programs<BR>
-April 20, 2019:  Version 029 - Fixed Lightning_Mode added Image test to blynkCode
-April 6, 2019:   Version 028 - Support for WXLink - remote WeatherRack/Temp/Humidity
-April 3, 2019:   Version 027 - Mod AS3935 Interrupt, added AQI to Database<BR>
-March 31, 2019:  Version 026 - Fixed Pins for Optional Fan On/Off<BR>
+sudo su
 
------------------
-Updating conflocal.py on your System<BR>
------------------
+apt-get update
+apt-get full-upgrade
 
-Run this command:
+reboot
 
-diff conflocal.py config.py
+sudo su
 
-Add the new config.py variables into your conflocal.py version for compatiblity
+pip install pip --upgrade
+pip3 install pip3 --upgrade
+apt-get install zram-tools
 
+reboot
 
------------------<BR>
+sudo su
 
-Install this for smbus:
+cd /home/pi
 
-sudo apt-get install python-smbus
+wget https://repo.mosquitto.org/debian/mosquitto-repo.gpg.key
+apt-key add mosquitto-repo.gpg.key
 
-Install this next:
+cd /etc/apt/sources.list.d/
 
+wget http://repo.mosquitto.org/debian/mosquitto-buster.list
 
-git clone https://github.com/adafruit/Adafruit_Python_PureIO.git<BR>
-cd Adafruit_Python_PureIO<BR>
-sudo python setup.py install<BR>
+cd /home/pi
 
-Other installations required for AM2315:
+apt-get update
 
-sudo apt-get install python-pip
+apt-get install vim git gfortran mariadb-server mariadb-client libatlas-base-dev libhdf5-dev libi2c-dev scons swig pigpio mosquitto mosquitto-clients
 
-sudo apt-get install libi2c-dev
+apt-get install python-mysqldb python3-pymysql python-numpy python3-numpy python-scipy python3-scipy python-matplotlib python3-matplotlib python-smbus python3-smbus python-pandas python3-pandas python-sympy python3-sympy python-nose python3-nose python-httplib2 python3-httplib2 python-dev python3-dev
 
+apt-get install ipython python-ipython python3-ipython python-notebook python3-notebook python-opencv python3-opencv python-mpltoolkits.basemap python3-mpltoolkits.basemap python-apscheduler python3-apscheduler python-seaborn python3-seaborn python-h5py python3-h5py python-paho-mqtt python3-paho-mqtt
 
-#Installing apscheduler
+pip install setuptools --upgrade
 
-sudo pip install --upgrade setuptools pip <BR>
+pip3 install setuptools --upgrade
 
-sudo pip install setuptools --upgrade  <BR>
-sudo pip install apscheduler <BR>
+pip install h5py --upgrade
 
-#Installing pigiod
+pip3 install h5py --upgrade 
 
-pigpiod is used to get accurate timing readings for the Air Quality sensor. <BR>
+pip install imutils
 
-sudo apt-get install pigpio
+pip3 install imutils
 
-#installing matplotlib
+pip3 install --ignore-installed tensorflow
 
-sudo apt-get install python-numpy python-matplotlib python-mpltoolkits.basemap 
+systemctl enable mosquitto
 
+mysql_secure_installation
 
-
-----------------<BR>
-Note some configurations of Raspberry Pi software requres the following:<BR>
-It won't hurt to do this in any case.<BR>
-----------------<BR>
-<pre>
-sudo apt-get update
-sudo apt-get install build-essential python-pip python-dev python-smbus git
-git clone https://github.com/adafruit/Adafruit_Python_GPIO.git
-cd Adafruit_Python_GPIO
-sudo python setup.py install
-cd ..
-cd SDL_Pi_SkyWeather
-cd Adafruit_Python_SSD1306
-sudo python setup.py install
 </pre>
-SwitchDocLabs Documentation for WeatherRack/WeatherPiArduino under products on: store.switchdoc.com
 
-Read the SkyWeather Instructable on instructables.com for more software installation instructions 
+<p><b>*THIS IS A COMMENT NOT A COMMAND TO EXECUTE: The password you set here MUST be updated in the config.py or conflocal.py file! You can answer Y for all prompts aside from the password.*</b></p>
 
-or
+<pre>
 
-Read the tutorial on SkyWeather on http://www.switchdoc.com/
-for more software installation instructions.
+git clone https://github.com/switchdoclabs/SDL_Pi_SkyWeather.git
 
------------
-setup your configuration variables in config.py!
------------
-We recommend you copy config.py to conflocal.py to avoid updates copying over your configuration file.<BR>
---------
-Add SQL instructions
-----------
+cd /home/pi/SDL_Pi_SkyWeather/SkyWeatherSQL
 
-Use phpmyadmin or sql command lines to add the included SQL file to your MySQL databases.<BR>
-Note:  If the database has been updated, run the example below to update your database.   The current contents will not be lost.
+mysql -u root -p < WeatherPiStructure.sql
 
-To install mysql ( https://www.stewright.me/2016/04/install-mysql-server-raspberry-pi/ ) <BR>
+</pre>
 
-also run this for the Python to MySQL bindings:
+---
 
-sudo apt-get install python-mysqldb
+<p><b>Make a copy of config.py as conflocal.py so that all configuration changes are saved in the event of a SkyWeather code update</b></p>
 
+<pre>
 
-cd SkyWeatherSQL
+cd /home/pi/SDL_Pi_SkyWeather
 
-sudo mysql -u root -p < WeatherPiStructure.sql
+cp config.py conflocal.py
 
-user:  root
+</pre>
 
-password: password
+---
 
-Obviously with these credentials, don't connect port 3306 to the Internet.   Change them if you aren't sure.
+<p><b>Starting the SkyWeather.py program is done using three commands (first command used to ensure you're in the correct directory). In the case below Python 3 (python3) is used; you may use python instead (i.e. remove the number 3) to execute the code using Python 2.7</b></p>
 
-The phpmyadmin user: admin <BR>
-password:   password <BR>
+<pre>
 
-NOTE:
-
-If you have a WXLink wireless transmitter installed, the software assumes you have connected your AM2315 outdoor temp/humidity sensor to the WXLink.  If you put another AM2315 on your local system, it will use those values instead of the WXLink values
-
--------------------<BR>
-# Starting the SkyWeather.py program
--------------------<BR>
-
-You start the program with two statements:
+cd /home/pi/SDL_Pi_SkyWeather
 
 sudo pigpiod
-sudo python SkyWeather.py
 
--------------------<BR>
-Set up your rc.local for start on boot<BR>
--------------------<BR>
+sudo python3 SkyWeather.py
 
-insert the following in your /etc/rc.local before the exit 0 statement:
+</pre>
 
-pigpiod
-cd /home/pi/SDL_Pi_SkyWeather <BR>
-nohup sudo python SkyWeather.py & <BR>
+---
 
+<p><b>Set up your rc.local for start on boot. Insert the following into /etc/rc.local before the exit 0 statement. This can be achieved using a text editor or vim from the terminal (i.e. sudo vim /etc/rc.local). Notice the below commands are essentially the same commands used to manually execute SkyWeather.</b></p>
 
+<pre>
 
+sudo pigpiod
+
+cd /home/pi/SDL_Pi_SkyWeather
+
+nohup sudo python3 SkyWeather.py
+
+</pre>
