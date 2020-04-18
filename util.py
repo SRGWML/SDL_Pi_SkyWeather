@@ -19,14 +19,16 @@ GROVEPOWERSAVEPIN = 12
 def turnOLEDOn():
     GPIO.setup(GROVEPOWERSAVEPIN, GPIO.OUT)
     GPIO.output(GROVEPOWERSAVEPIN, True)
-    if (config.USEBLYNK):
-        updateBlynk.blynkStatusTerminalUpdate("OLED Turned On")
+    if (state.InternetIsUp):
+        if (config.USEBLYNK):
+            updateBlynk.blynkStatusTerminalUpdate("OLED Turned On")
 
 def turnOLEDOff():
     GPIO.setup(GROVEPOWERSAVEPIN, GPIO.OUT)
     GPIO.output(GROVEPOWERSAVEPIN, False)
-    if (config.USEBLYNK):
-        updateBlynk.blynkStatusTerminalUpdate("OLED Turned Off")
+    if (state.InternetIsUp):
+        if (config.USEBLYNK):
+            updateBlynk.blynkStatusTerminalUpdate("OLED Turned Off")
 
 ################
 # Unit Conversion

@@ -224,10 +224,12 @@ def readWXLink(block1, block2, stringblock1, stringblock2, block1_orig, block2_o
                                     if (config.USEBLYNK):
                                         if (config.WXLink_Data_Fresh == True):
                                             if (config.SWDEBUG):
-                                                updateBlynk.blynkStatusTerminalUpdate("SolarMAX ID# %d received"%config.WXLink_LastMessageID)
+                                                if (state.InternetIsUp):
+                                                    updateBlynk.blynkStatusTerminalUpdate("SolarMAX ID# %d received"%config.WXLink_LastMessageID)
                                         entry = time.strftime("%Y-%m-%d %H:%M:%S")+": %i \n" % (MessageID)
                                         state.SolarMAXLastReceived = entry
-                                        updateBlynk.blynkSolarMAXLine(entry,protocol_ID )
+                                        if (state.InternetIsUp):
+                                            updateBlynk.blynkSolarMAXLine(entry,protocol_ID )
 
                             if ((protocol_ID == WXLINKPROTOCOLID) or (protocol_ID == 8) or (protocol_ID == 10)):
                             # if ((protocol_ID == WXLINKPROTOCOLID) or (protocol_ID == SOLARMAXPROTOCOL) ):

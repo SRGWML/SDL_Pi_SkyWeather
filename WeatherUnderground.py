@@ -16,7 +16,7 @@ except ImportError:
 
 def sendWeatherUndergroundData(as3935LightningCount, as3935, as3935LastInterrupt, as3935LastDistance, as3935LastStatus, currentWindSpeed, currentWindGust, totalRain, bmp180Temperature, bmp180Pressure, bmp180Altitude,  bmp180SeaLevel, outsideTemperature, outsideHumidity, crc_check, currentWindDirection, currentWindDirectionVoltage, HTUtemperature, HTUhumidity, rain60Minutes):
     # https://weatherstation.wunderground.com/weatherstation/updateweatherstation.php?ID=KCASANFR5&PASSWORD=XXXXXX&dateutc=2000-01-01+10%3A32%3A35&winddir=230&windspeedmph=12&windgustmph=12&tempf=70&rainin=0&baromin=29.1&dewptf=68.2&humidity=90&weather=&clouds=&softwaretype=vws%20versionxx&action=updateraw
-    
+
     # build the URL
     myURL = "ID="+config.WeatherUnderground_StationID
     myURL += "&PASSWORD="+config.WeatherUnderground_StationKey
@@ -47,7 +47,7 @@ def sendWeatherUndergroundData(as3935LightningCount, as3935, as3935LastInterrupt
 
     print ("myURL=", myURL)
     #send it
-    r = requests.get("https://rtupdate.wunderground.com/weatherstation/updateweatherstation.php", params=myURL)
+    r = requests.get("https://rtupdate.wunderground.com/weatherstation/updateweatherstation.php", params=myURL, timeout=10)
 
     print(r.url)
     print(r.text)

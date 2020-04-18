@@ -68,6 +68,8 @@ import pclogging
 
 import updateBlynk
 
+import checkInternetConnection
+
 import state
 
 #make cross compatible between Python 2 and 3
@@ -105,6 +107,11 @@ import DustSensor
 import util
 
 import SDL_Pi_HDC1000
+
+# Initialized for safety
+state.InternetIsUp = False
+state.blynkInitState = False
+state.sampleAndDisplayFirstRun = 0
 
 # ###############
 # Device Present State Variables
@@ -284,7 +291,7 @@ else:
 def turnFanOn():
    if (state.fanState == False):
     pclogging.log(pclogging.INFO, __name__, "Turning Fan On" )
-    if (config.USEBLYNK):
+    if (state.blynkInitState):
         updateBlynk.blynkStatusTerminalUpdate("Turning Fan On")
     myPowerDrive.setPowerDrive(1, True)
     myPowerDrive.setPowerDrive(2, True)
@@ -293,7 +300,7 @@ def turnFanOn():
 def turnFanOff():
    if (state.fanState == True):
     pclogging.log(pclogging.INFO, __name__, "Turning Fan Off" )
-    if (config.USEBLYNK):
+    if (state.blynkInitState):
        updateBlynk.blynkStatusTerminalUpdate("Turning Fan Off")
     myPowerDrive.setPowerDrive(1, False)
     myPowerDrive.setPowerDrive(2, False)
@@ -622,16 +629,16 @@ def process_as3935_interrupt():
 
     if reason == 0x00:
         as3935LastStatus = "Spurious Interrupt"
-        if (config.USEBLYNK):
+        if (state.blynkInitState):
             updateBlynk.blynkStatusTerminalUpdate("AS3935: Spurious Interrupt")
     elif reason == 0x01:
         as3935LastStatus = "Noise Floor too low. Adjusting"
-        if (config.USEBLYNK):
+        if (state.blynkInitState):
             updateBlynk.blynkStatusTerminalUpdate("AS3935: Noise Floor too low - adjusted")
         as3935.raise_noise_floor()
     elif reason == 0x04:
         as3935LastStatus = "Disturber detected - masking"
-        if (config.USEBLYNK):
+        if (state.blynkInitState):
             updateBlynk.blynkStatusTerminalUpdate("AS3935: Disturber detected - masking")
         as3935.set_mask_disturber(True)
     elif reason == 0x08:
@@ -639,7 +646,7 @@ def process_as3935_interrupt():
         distance = as3935.get_distance()
         as3935LastDistance = distance
         as3935LastStatus = "Lightning Detected "  + str(distance) + "km away. (%s)" % now
-        if (config.USEBLYNK):
+        if (state.blynkInitState):
             updateBlynk.blynkEventUpdate("Lightning Detected "  + str(distance) + "km away.")
             updateBlynk.blynkStatusTerminalUpdate("Lightning Detected "  + str(distance) + "km away.")
 
@@ -951,7 +958,7 @@ def sampleWeather():
                         state.solarPower = state.WXsolarPower
                         state.loadPower = state.WXloadPower
                         state.batteryCharge = state.WXbatteryCharge
-                    if (config.USEBLYNK):
+                    if (state.blynkInitState):
                         if (config.WXLink_Data_Fresh == True):
                             updateBlynk.blynkStatusTerminalUpdate("WXLink ID# %d recieved"%config.WXLink_LastMessageID)
             else:
@@ -1167,11 +1174,14 @@ def sampleWeather():
         # always set message stale set to False since we have consumed it
         config.WXLink_Data_Fresh = False
 
-        try:
-            print ("--Sending Data to WeatherUnderground--")
-            WeatherUnderground.sendWeatherUndergroundData( as3935LightningCount, as3935, as3935LastInterrupt, as3935LastDistance, as3935LastStatus, currentWindSpeed, currentWindGust, totalRain, bmp180Temperature, bmp180SeaLevel, bmp180Altitude,  bmp180SeaLevel, outsideTemperature, outsideHumidity, crc_check, currentWindDirection, currentWindDirectionVoltage, HTUtemperature, HTUhumidity, rain60Minutes)
-        except:
-            print ("--WeatherUnderground Data Send Failed")
+        if (state.InternetIsUp):
+            try:
+                print ("--Sending Data to WeatherUnderground--")
+                WeatherUnderground.sendWeatherUndergroundData(as3935LightningCount, as3935, as3935LastInterrupt, as3935LastDistance, as3935LastStatus, currentWindSpeed, currentWindGust, totalRain, bmp180Temperature, bmp180SeaLevel, bmp180Altitude,  bmp180SeaLevel, outsideTemperature, outsideHumidity, crc_check, currentWindDirection, currentWindDirectionVoltage, HTUtemperature, HTUhumidity, rain60Minutes)
+            except:
+                print ("--WeatherUnderground Data Send Failed")
+        else:
+            print ("--Internet is down, no point in sending WeatherUnderground Data")
 
     else:
         # set the Data to stale
@@ -1266,13 +1276,28 @@ def sampleSunAirPlus():
         print ("-----------------")
 
 def sampleAndDisplay():
+    # no sense in trying if we don't have an internet connection
+    if (state.sampleAndDisplayFirstRun == 0):
+        state.blynkInitState = False
+
+    # Check connectivity to the internet and save the results as state.InternetIsUp within the module
+    checkInternetConnection.isitup()
+
+    if (config.USEBLYNK):
+        if (state.InternetIsUp):
+            if (state.blynkInitState == False):
+                updateBlynk.blynkInit()
+                if (state.blynkInitState):
+                    updateBlynk.blynkEventUpdate("SW Startup Version "+config.SWVERSION)
+                    updateBlynk.blynkStatusTerminalUpdate("SW Startup Version "+config.SWVERSION)
+
     global currentWindSpeed, currentWindGust, totalRain
-    global  bmp180Temperature, bmp180Pressure, bmp180Altitude,  bmp180SeaLevel
+    global bmp180Temperature, bmp180Pressure, bmp180Altitude, bmp180SeaLevel
     global outsideTemperature, outsideHumidity, crc_check
     global currentWindDirection, currentWindDirectionVoltage
     global HTUtemperature, HTUhumidity
 
-    global  SunlightVisible, SunlightIR, SunlightUV,  SunlightUVIndex
+    global  SunlightVisible, SunlightIR, SunlightUV, SunlightUVIndex
 
     global totalRain, as3935LightningCount
     global as3935, as3935LastInterrupt, as3935LastDistance, as3935LastStatus
@@ -1354,7 +1379,7 @@ def sampleAndDisplay():
         if (config.SWDEBUG == True):
             state.printState()
 
-        if (config.USEBLYNK):
+        if (state.blynkInitState):
             updateBlynk.blynkStateUpdate()
 
         print ("-----------------")
@@ -1473,29 +1498,19 @@ def patTheDog():
 
 def shutdownPi(why):
     pclogging.log(pclogging.INFO, __name__, "Pi Shutting Down: %s" % why)
-    sendemail.sendEmail("test", "SkyWeather Shutting down:"+ why, "The SkyWeather Raspberry Pi shutting down.", config.notifyAddress,  config.fromAddress, "");
+    if (state.InternetIsUp):
+        sendemail.sendEmail("test", "SkyWeather Shutting down:"+ why, "The SkyWeather Raspberry Pi shutting down.", config.notifyAddress,  config.fromAddress, "");
     sys.stdout.flush()
     time.sleep(10.0)
     os.system("sudo shutdown -h now")
 
 def rebootPi(why):
     pclogging.log(pclogging.INFO, __name__, "Pi Rebooting: %s" % why)
-    if (config.USEBLYNK):
+    if (state.blynkInitState):
         updateBlynk.blynkEventUpdate("Pi Rebooting: %s" % why)
         updateBlynk.blynkStatusTerminalUpdate("Pi Rebooting: %s" % why)
     pclogging.log(pclogging.INFO, __name__, "Pi Rebooting: %s" % why)
     os.system("sudo shutdown -r now")
-
-def checkInternetConnection():
-    try:
-        urllib2.urlopen("http://www.google.com").close()
-    except urllib2.URLError:
-        print ("Internet Not Connected")
-        time.sleep(1)
-        return False
-    else:
-        print ("Internet Connected")
-        return True
 
 WLAN_check_flg = 0
 
@@ -1584,20 +1599,21 @@ def updateRain():
     lastRainReading = totalRain
 
 def statusRain():
-        if (config.USEBLYNK):
+        if (state.blynkInitState):
             updateBlynk.blynkStatusTerminalUpdate("Rain in past 60 minutes=%0.2fmm"%rain60Minutes)
 
 def statusAM2315():
         if (config.USEBLYNK):
-            if (config.AM2315_Present):
-                updateBlynk.blynkStatusTerminalUpdate("AM2315 ST: (g,br,bc,rt,pc) %s"% str(am2315.read_status_info()))
-            if (config.SHT30_Present):
-                updateBlynk.blynkStatusTerminalUpdate("SHT30 ST: (g,br,bc,rt,pc) %s"% str(sht30.read_status_info()))
+            if (state.blynkInitState):
+                if (config.AM2315_Present):
+                    updateBlynk.blynkStatusTerminalUpdate("AM2315 ST: (g,br,bc,rt,pc) %s"% str(am2315.read_status_info()))
+                if (config.SHT30_Present):
+                    updateBlynk.blynkStatusTerminalUpdate("SHT30 ST: (g,br,bc,rt,pc) %s"% str(sht30.read_status_info()))
 
 def checkForShutdown():
     if (batteryVoltage < 3.5):
         print ("--->>>>Time to Shutdown<<<<---")
-        if (config.USEBLYNK):
+        if (state.blynkInitState):
             updateBlynk.blynkStatusTerminalUpdate("Low Voltage Shutdown")
         shutdownPi("low voltage shutdown")
 
@@ -1614,7 +1630,7 @@ def checkForButtons():
     if ((state.runOLED == False) and (config.OLED_Originally_Present == True)):
         reinitializeOLED = True
 
-    if (config.USEBLYNK):
+    if (state.blynkInitState):
         updateBlynk.blynkStatusUpdate()
 
     if ((state.runOLED == True) and (reinitializeOLED == True)):
@@ -1670,9 +1686,6 @@ print (returnStatusLine("WeatherUnderground",config.WeatherUnderground_Present))
 print (returnStatusLine("UseWeatherStem",config.USEWEATHERSTEM))
 print ("----------------------")
 
-if (config.USEBLYNK):
-    updateBlynk.blynkInit()
-
 # initialize appropriate weather variables
 currentWindDirection = 0
 currentWindDirectionVoltage = 0.0
@@ -1681,10 +1694,6 @@ rain60Minutes = 0.0
 #as3935Interrupt = False
 
 pclogging.log(pclogging.INFO, __name__, "SkyWeather Startup Version"+config.SWVERSION)
-
-if (config.USEBLYNK):
-    updateBlynk.blynkEventUpdate("SW Startup Version "+config.SWVERSION)
-    updateBlynk.blynkStatusTerminalUpdate("SW Startup Version "+config.SWVERSION)
 
 subjectText = "The "+ config.STATIONKEY + " SkyWeather Raspberry Pi has #rebooted."
 if (sys.version_info >= (3, 0)):

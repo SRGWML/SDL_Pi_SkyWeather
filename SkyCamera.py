@@ -7,7 +7,7 @@ import sys
 import hashlib
 
 # FTP module required for FTP upload to WeatherUnderground
-from ftplib import FTP
+import ftplib
 
 from PIL import ImageFont, ImageDraw, Image
 import traceback
@@ -123,12 +123,13 @@ def takeSkyPicture():
                 print ("SkyCam Close Failed ")
                 print ("--------------------")
 
-    if (config.USEWEATHERSTEM == True):
-        sendSkyWeather()
-
-    # if WeatherUnderground_Camera is enabled in the configuration file
-    if (config.WeatherUnderground_Camera == True):
-        sendWeatherUndergroundCamera()
+    # no sense in trying if we don't have an internet connection
+    if (state.InternetIsUp):
+        if (config.USEWEATHERSTEM == True):
+            sendSkyWeather()
+        # if WeatherUnderground_Camera is enabled in the configuration file
+        if (config.WeatherUnderground_Camera == True):
+            sendWeatherUndergroundCamera()
 
 import base64
 
@@ -146,8 +147,8 @@ def sendWeatherUndergroundCamera():
     wu_image.save(wu_filename)
     try:
         # Establish the connection the the WeatherUnderground FTP server
-        ftp = FTP()
-        ftp.connect(host=config.WeatherUnderground_CameraServer)
+        ftp = ftplib.FTP()
+        ftp.connect(host=config.WeatherUnderground_CameraServer, timeout=10)
         ftp.login(user=config.WeatherUnderground_CameraUsername, passwd=config.WeatherUnderground_CameraPassword)
         # Optional to display the FTP welcome message from the WeatherUnderground server
         # print(ftp.getwelcome())
@@ -161,12 +162,9 @@ def sendWeatherUndergroundCamera():
         fh.close()
         print ("WeatherUnderground image uploaded")
 
-    except FTP.all_errors as e:
+    except Exception as e:
         print('FTP error:', e)
-        # Close the FTP session
-        ftp.quit()
-        # Close the file
-        fh.close()
+        return 0
 
 def sendSkyWeather():
 
@@ -199,18 +197,15 @@ def sendSkyWeather():
 	},
 	"utc":currentTime,
 	"sensors":[
-
 		{
 			"name":"OutsideTemperature",
 			"value": state.currentOutsideTemperature,
                         "units" : "C"
-
 		},
 		{
 			"name":"OutsideHumidity",
 			"value": state.currentOutsideHumidity,
                         "units" : "%"
-
 		},
 		{
 			"name":"InsideTemperature",
@@ -221,7 +216,6 @@ def sendSkyWeather():
 			"name":"InsideHumidity",
 			"value": state.currentInsideHumidity,
                         "units" : "%"
-
 		},
 		{
 			"name":"RainInLast60Minutes",
@@ -242,7 +236,6 @@ def sendSkyWeather():
 			"name":"UVSunlightt",
 			"value": state.currentSunlightUV,
                         "units" : "lux"
-
 		},
 		{
 			"name":"WindSpeed",
@@ -263,13 +256,11 @@ def sendSkyWeather():
 			"name":"totalRain",
 			"value": state.currentTotalRain,
                         "units" : "mm"
-
 		},
 		{
 			"name":"BarometricPressure",
 			"value": state.currentBarometricPressure,
                         "units" : "hPa"
-
 		},
 		{
 			"name":"Altitude",
@@ -285,8 +276,6 @@ def sendSkyWeather():
 			"name":"BarometricTrend",
 			"value": bptrendvalue,
                         "units" : ""
-
-
 		},
 		{
 			"name":"OutdoorAirQuality",
@@ -302,13 +291,11 @@ def sendSkyWeather():
 			"name":"LastLightningDistance",
 			"value": state.currentAs3935LastDistance,
                         "units" : "km"
-
 		},
 		{
 			"name":"LastLightningTimeStamp",
 			"value": state.currentAs3935LastLightningTimeStamp,
                         "units" : ""
-
 		}
                 ],
 	"solarpower":[
@@ -316,8 +303,6 @@ def sendSkyWeather():
 			"name":"BatteryVoltage",
 			"value": state.batteryVoltage,
                         "units" : "V"
-
-
 		},
 		{
 			"name":"BatteryCurrent",
@@ -333,7 +318,6 @@ def sendSkyWeather():
 			"name":"SolarCurrent",
 			"value": state.solarCurrent,
                         "units" : "ma"
-
 		},
                 {
 			"name":"LoadVoltage",
@@ -364,13 +348,11 @@ def sendSkyWeather():
 			"name":"BatteryCharge",
 			"value": state.batteryCharge,
                         "units" : "%"
-
 		},
 		{
 			"name":"WXBatteryVoltage",
 			"value": state.WXbatteryVoltage,
                         "units" : "V"
-
 		},
 		{
 			"name":"WXBatteryCurrent",
@@ -416,8 +398,6 @@ def sendSkyWeather():
 			"name":"WXBatteryCharge",
 			"value": state.WXbatteryCharge,
                         "units" : "%"
-
-
 		}
 		
 	],
@@ -430,12 +410,16 @@ def sendSkyWeather():
 	]
     }
 
-
-
     # sending post request and saving response as response object
-    r = requests.post(url = API_ENDPOINT, json = data)
-    #print data
-    # extracting response text
-    pastebin_url = r.text
-    if (config.SWDEBUG):
-        print("The pastebin URL is (r.text):%s"%pastebin_url)
+    # we send the data to WeatherSTEM here
+    # no sense if trying if we don't have an internet connection
+    if (state.InternetIsUp):
+        try:
+            r = requests.post(url = API_ENDPOINT, json = data, timeout=10)
+            #print data
+            # extracting response text
+            pastebin_url = r.text
+            if (config.SWDEBUG):
+                print("The pastebin URL is (r.text):%s"%pastebin_url)
+        except requests.exceptions.RequestException as e:
+            state.InternetIsUp = False

@@ -13,7 +13,8 @@ except ImportError:
     import config
 
 def stopFlash():
-    r = requests.get(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V30?value=0')
+    if (state.InternetIsUp):
+        r = requests.get(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V30?value=0', timeout=10)
 
 def blynkInit():
     # initalize button states
@@ -21,18 +22,17 @@ def blynkInit():
         if (config.DEBUGBLYNK):
             print ("Entering blynkInit:")
 
-        r = requests.get(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V5?value=0')
+        r = requests.get(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V5?value=0', timeout=10)
         if (state.runOLED == True):
-            r = requests.get(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V6?value=1')
+            r = requests.get(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V6?value=1', timeout=10)
         else:
-            r = requests.get(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V6?value=0')
-        r = requests.get(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V30?value=0')
+            r = requests.get(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V6?value=0', timeout=10)
+        r = requests.get(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V30?value=0', timeout=10)
         # initialize LEDs
-        r = requests.get(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V42?value=255')
-        r = requests.get(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V43?value=255')
+        r = requests.get(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V42?value=255', timeout=10)
+        r = requests.get(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V43?value=255', timeout=10)
 
         # read english Metric in from file
-
         try:
             f = open("/home/pi/SDL_Pi_SkyWeather/state/EnglishMetric.txt", "r")
             value = int(f.read())
@@ -48,21 +48,25 @@ def blynkInit():
         if (config.DEBUGBLYNK):
             print ("state.EnglishMetric = ", value)
         if (state.EnglishMetric == 0):
-            r = requests.get(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V8?value=0')
+            r = requests.get(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V8?value=0', timeout=10)
         else:
-            r = requests.get(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V8?value=1')
+            r = requests.get(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V8?value=1', timeout=10)
 
         if (config.DEBUGBLYNK):
             print ("Exiting blynkInit:")
 
+        state.blynkInitState = True
+
     except Exception as e:
         print ("exception in blynkInit")
         print (e)
+
+        state.blynkInitState = False
         return 0
 
 def blynkResetButton(buttonNumber):
     try:
-        r = requests.get(config.BLYNK_URL+config.BLYNK_AUTH+'/update/'+buttonNumber+'?value=0')
+        r = requests.get(config.BLYNK_URL+config.BLYNK_AUTH+'/update/'+buttonNumber+'?value=0', timeout=10)
     except Exception as e:
         print ("exception in blynkResetButton")
         print (e)
@@ -75,7 +79,7 @@ def blynkEventUpdate(Event):
         put_body = json.dumps([val])
         if (config.DEBUGBLYNK):
             print ("blynkEventUpdate:",val)
-        r = requests.put(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V31', data=put_body, headers=put_header)
+        r = requests.put(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V31', data=put_body, headers=put_header, timeout=10)
         if (config.DEBUGBLYNK):
             print ("blynkEventUpdate:POST:r.status_code:",r.status_code)
         return 1
@@ -92,7 +96,7 @@ def blynkStatusTerminalUpdate(entry):
         put_body = json.dumps([entry])
         if (config.DEBUGBLYNK):
             print ("blynkStateUpdate:Pre:put_body:",put_body)
-        r = requests.put(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V32', data=put_body, headers=put_header)
+        r = requests.put(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V32', data=put_body, headers=put_header, timeout=10)
         if (config.DEBUGBLYNK):
             print ("blynkStateUpdate:POST:r.status_code:",r.status_code)
     except Exception as e:
@@ -107,7 +111,7 @@ def blynkSolarMAXLine(entry, protocol):
         put_body = json.dumps([entry])
         if (config.DEBUGBLYNK):
             print ("blynkSolarMAXUpdate:Pre:put_body:",put_body)
-        r = requests.put(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V75', data=put_body, headers=put_header)
+        r = requests.put(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V75', data=put_body, headers=put_header, timeout=10)
         if (config.DEBUGBLYNK):
             print ("blynkSolarMAXUpdate:POST:r.status_code:",r.status_code)
     except Exception as e:
@@ -123,14 +127,13 @@ def blynkSolarTerminalUpdate(entry):
         put_body = json.dumps([entry])
         if (config.DEBUGBLYNK):
             print ("blynkStateUpdate:Pre:put_body:",put_body)
-        r = requests.put(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V33', data=put_body, headers=put_header)
+        r = requests.put(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V33', data=put_body, headers=put_header, timeout=10)
         if (config.DEBUGBLYNK):
             print ("blynkStateUpdate:POST:r.status_code:",r.status_code)
     except Exception as e:
         print ("exception in blynkTerminalUpdate")
         print (e)
         return 0
-
 
 def blynkUpdateImage():
     #Blynk.setProperty(V1, "urls", "https://image1.jpg", "https://image2.jpg");
@@ -154,7 +157,7 @@ def blynkUpdateImage():
         if (config.DEBUGBLYNK):
              print "blynkUpdateImage:OTHER:r.status_code:",r.status_code
         """
-        r = requests.get(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V70?urls=http://www.switchdoc.com/SkyWeatherNoAlpha.png') # Picture URL
+        r = requests.get(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V70?urls=http://www.switchdoc.com/SkyWeatherNoAlpha.png', timeout=10) # Picture URL
     except Exception as e:
         print ("exception in blynkUpdateImage")
         print (e)
@@ -173,7 +176,7 @@ def blynkStateUpdate():
         put_body = json.dumps([val])
         if (config.DEBUGBLYNK):
             print ("blynkEventUpdate:",val)
-        r = requests.put(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V44', data=put_body, headers=put_header)
+        r = requests.put(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V44', data=put_body, headers=put_header, timeout=10)
         if (config.DEBUGBLYNK):
             print ("blynkEventUpdate:POST:r.status_code:",r.status_code)
 
@@ -183,73 +186,73 @@ def blynkStateUpdate():
         put_body = json.dumps([val])
         if (config.DEBUGBLYNK):
             print ("blynkStateUpdate:Pre:put_body:",put_body)
-        r = requests.put(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V7', data=put_body, headers=put_header)
+        r = requests.put(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V7', data=put_body, headers=put_header, timeout=10)
         if (config.DEBUGBLYNK):
             print ("blynkStateUpdate:POST:r.status_code:",r.status_code)
 
         val = util.returnTemperatureCF(state.currentOutsideTemperature)
         tval = "{0:0.1f} ".format(val) + util.returnTemperatureCFUnit()
         put_body = json.dumps([tval])
-        r = requests.put(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V0', data=put_body, headers=put_header)
+        r = requests.put(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V0', data=put_body, headers=put_header, timeout=10)
 
         val = util.returnTemperatureCF(state.currentOutsideTemperature)
         put_body = json.dumps([val])
-        r = requests.put(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V10', data=put_body, headers=put_header)
+        r = requests.put(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V10', data=put_body, headers=put_header, timeout=10)
 
         val = state.currentOutsideHumidity
         put_body = json.dumps(["{0:0.1f}%".format(val)])
-        r = requests.put(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V1', data=put_body, headers=put_header)
+        r = requests.put(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V1', data=put_body, headers=put_header, timeout=10)
 
         val = state.currentOutsideHumidity
         put_body = json.dumps([val])
-        r = requests.put(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V11', data=put_body, headers=put_header)
+        r = requests.put(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V11', data=put_body, headers=put_header, timeout=10)
 
         val = util.returnTemperatureCF(state.currentInsideTemperature)
         tval = "{0:0.1f} ".format(val) + util.returnTemperatureCFUnit()
         put_body = json.dumps([tval])
-        r = requests.put(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V21', data=put_body, headers=put_header)
+        r = requests.put(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V21', data=put_body, headers=put_header, timeout=10)
 
         val = util.returnTemperatureCF(state.currentInsideTemperature)
         tval = "{0:0.1f}".format(val)
         put_body = json.dumps([val])
-        r = requests.put(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V120', data=put_body, headers=put_header)
+        r = requests.put(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V120', data=put_body, headers=put_header, timeout=10)
 
         val = state.currentInsideHumidity
         put_body = json.dumps(["{0:0.1f}%".format(val)])
-        r = requests.put(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V13', data=put_body, headers=put_header)
+        r = requests.put(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V13', data=put_body, headers=put_header, timeout=10)
 
         val = state.currentInsideHumidity
         put_body = json.dumps(["{0:0.1f}".format(val)])
-        r = requests.put(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V121', data=put_body, headers=put_header)
+        r = requests.put(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V121', data=put_body, headers=put_header, timeout=10)
 
         if (state.fanState == False):
             val = 0
         else:
             val = 1
         put_body = json.dumps([val])
-        r = requests.put(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V122', data=put_body, headers=put_header)
+        r = requests.put(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V122', data=put_body, headers=put_header, timeout=10)
 
         #wind
         val = util.returnWindSpeed(state.ScurrentWindSpeed)
         tval = "{0:0.1f}".format(val) + util.returnWindSpeedUnit()
         put_body = json.dumps([tval])
-        r = requests.put(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V9', data=put_body, headers=put_header)
+        r = requests.put(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V9', data=put_body, headers=put_header, timeout=10)
 
         #now humidity
         #val = util.returnWindSpeed(state.ScurrentWindSpeed)
         val = state.currentOutsideHumidity
         put_body = json.dumps([val])
-        r = requests.put(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V19', data=put_body, headers=put_header)
+        r = requests.put(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V19', data=put_body, headers=put_header, timeout=10)
 
         # outdoor Air Quality
         val = state.Outdoor_AirQuality_Sensor_Value
         put_body = json.dumps([val])
-        r = requests.put(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V20', data=put_body, headers=put_header)
+        r = requests.put(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V20', data=put_body, headers=put_header, timeout=10)
 
         #wind direction
         val = "{0:0.0f}/".format(state.ScurrentWindDirection) + util.returnWindDirection(state.ScurrentWindDirection)
         put_body = json.dumps([val])
-        r = requests.put(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V2', data=put_body, headers=put_header)
+        r = requests.put(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V2', data=put_body, headers=put_header, timeout=10)
 
         #rain
         val = "{0:0.2f}".format(state.currentTotalRain)
@@ -258,13 +261,13 @@ def blynkStateUpdate():
         else:
             tval = "{0:0.2f}in".format(state.currentTotalRain / 25.4)
         put_body = json.dumps([tval])
-        r = requests.put(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V3', data=put_body, headers=put_header)
+        r = requests.put(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V3', data=put_body, headers=put_header, timeout=10)
 
         #Sunlight
         val = "{0:0.0f}".format(state.currentSunlightVisible)
         #print ("Sunlight Val = ", state.currentSunlightVisible)
         put_body = json.dumps([val])
-        r = requests.put(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V4', data=put_body, headers=put_header)
+        r = requests.put(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V4', data=put_body, headers=put_header, timeout=10)
 
         #barometric Pressure
         if (state.EnglishMetric == 1):
@@ -272,7 +275,7 @@ def blynkStateUpdate():
         else:
             tval = "{0:0.2f}in".format((state.currentSeaLevel * 0.2953)/10.0)
         put_body = json.dumps([tval])
-        r = requests.put(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V40', data=put_body, headers=put_header)
+        r = requests.put(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V40', data=put_body, headers=put_header, timeout=10)
 
         #barometric Pressure graph
         if (state.EnglishMetric == 1):
@@ -280,85 +283,83 @@ def blynkStateUpdate():
         else:
             tval = "{0:0.2f}".format((state.currentSeaLevel * 0.2953)/10.0)
         put_body = json.dumps([tval])
-        r = requests.put(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V41', data=put_body, headers=put_header)
+        r = requests.put(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V41', data=put_body, headers=put_header, timeout=10)
 
         #solar data
         val = "{0:0.2f}".format(state.solarVoltage)
         put_body = json.dumps([val])
-        r = requests.put(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V50', data=put_body, headers=put_header)
+        r = requests.put(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V50', data=put_body, headers=put_header, timeout=10)
 
         val = "{0:0.1f}".format(state.solarCurrent)
         put_body = json.dumps([val])
-        r = requests.put(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V51', data=put_body, headers=put_header)
+        r = requests.put(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V51', data=put_body, headers=put_header, timeout=10)
 
         val = "{0:0.2f}".format(state.batteryVoltage)
         put_body = json.dumps([val])
-        r = requests.put(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V52', data=put_body, headers=put_header)
+        r = requests.put(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V52', data=put_body, headers=put_header, timeout=10)
 
         val = "{0:0.1f}".format(state.batteryCurrent)
         put_body = json.dumps([val])
-        r = requests.put(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V53', data=put_body, headers=put_header)
+        r = requests.put(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V53', data=put_body, headers=put_header, timeout=10)
 
         val = "{0:0.2f}".format(state.loadVoltage)
         put_body = json.dumps([val])
-        r = requests.put(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V54', data=put_body, headers=put_header)
+        r = requests.put(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V54', data=put_body, headers=put_header, timeout=10)
 
         val = "{0:0.1f}".format(state.loadCurrent)
         put_body = json.dumps([val])
-        r = requests.put(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V55', data=put_body, headers=put_header)
+        r = requests.put(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V55', data=put_body, headers=put_header, timeout=10)
 
         val = "{0:0.1f}W".format(state.batteryPower)
         put_body = json.dumps([val])
-        r = requests.put(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V60', data=put_body, headers=put_header)
+        r = requests.put(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V60', data=put_body, headers=put_header, timeout=10)
 
         val = "{0:0.1f}W".format(state.solarPower)
         put_body = json.dumps([val])
-        r = requests.put(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V61', data=put_body, headers=put_header)
+        r = requests.put(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V61', data=put_body, headers=put_header, timeout=10)
 
         val = "{0:0.1f}W".format(state.loadPower)
         put_body = json.dumps([val])
-        r = requests.put(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V62', data=put_body, headers=put_header)
+        r = requests.put(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V62', data=put_body, headers=put_header, timeout=10)
 
         if (config.SolarMAX_Present == True):
             val = util.returnTemperatureCF(state.SolarMaxInsideTemperature)
             tval = "{0:0.1f} ".format(val) + util.returnTemperatureCFUnit()
             put_body = json.dumps([tval])
-            r = requests.put(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V76', data=put_body, headers=put_header)
+            r = requests.put(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V76', data=put_body, headers=put_header, timeout=10)
 
             val = "{0:0.1f}%".format(state.SolarMaxInsideHumidity)
             put_body = json.dumps([val])
-            r = requests.put(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V77', data=put_body, headers=put_header)
+            r = requests.put(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V77', data=put_body, headers=put_header, timeout=10)
 
         val = "{0:0.1f}".format(state.batteryCharge)
         put_body = json.dumps([val])
-        r = requests.put(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V56', data=put_body, headers=put_header)
+        r = requests.put(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V56', data=put_body, headers=put_header, timeout=10)
 
         val = "{0:0.1f}".format(state.batteryCharge)
         put_body = json.dumps([val])
-        r = requests.put(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V127', data=put_body, headers=put_header)
+        r = requests.put(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V127', data=put_body, headers=put_header, timeout=10)
 
         delta = util.returnTemperatureCF(state.currentInsideTemperature)- util.returnTemperatureCF(state.currentOutsideTemperature)
 
         val = "{0:0.1f}".format(delta)
         put_body = json.dumps([val])
-        r = requests.put(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V128', data=put_body, headers=put_header)
+        r = requests.put(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V128', data=put_body, headers=put_header, timeout=10)
 
         # LEDs
         if (state.barometricTrend):   #True is up, False is down
-            r = requests.get(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V42?color=%2300FF00') # Green
+            r = requests.get(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V42?color=%2300FF00', timeout=10) # Green
             if (config.DEBUGBLYNK):
                 print ("blynkAlarmUpdate:OTHER:r.status_code:",r.status_code)
         else:
-            r = requests.get(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V42?color=%23FF0000') # red
+            r = requests.get(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V42?color=%23FF0000', timeout=10) # red
 
         if (state.currentAs3935LastLightningTimeStamp < time.clock() + 1800):   #True is lightning, False is none
-            r = requests.get(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V43?color=%2300FF00') # Green
+            r = requests.get(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V43?color=%2300FF00', timeout=10) # Green
             if (config.DEBUGBLYNK):
                 print ("blynkAlarmUpdate:OTHER:r.status_code:",r.status_code)
         else:
-            r = requests.get(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V43?color=%23FF0000') # red
-
-        return 1
+            r = requests.get(config.BLYNK_URL+config.BLYNK_AUTH+'/update/V43?color=%23FF0000', timeout=10) # red
 
     except Exception as e:
         print ("exception in blynkStateUpdate")
@@ -373,7 +374,7 @@ def blynkStatusUpdate():
         put_header={"Content-Type": "application/json"}
 
         # look for English or Metric
-        r = requests.get(config.BLYNK_URL+config.BLYNK_AUTH+'/get/V8') # read button state
+        r = requests.get(config.BLYNK_URL+config.BLYNK_AUTH+'/get/V8', timeout=10) # read button state
         if (config.DEBUGBLYNK):
             print ("blynkStatusUpdate:POSTEM:r.status_code:",r.status_code)
             print ("blynkStatusUpdate:POSTEM:r.text:",r.text)
@@ -397,7 +398,7 @@ def blynkStatusUpdate():
                 blynkStatusTerminalUpdate("Set to English Units ")
 
         # look for rainbow button change
-        r = requests.get(config.BLYNK_URL+config.BLYNK_AUTH+'/get/V5') # read button state
+        r = requests.get(config.BLYNK_URL+config.BLYNK_AUTH+'/get/V5', timeout=10) # read button state
         if (config.DEBUGBLYNK):
             print ("blynkStatusUpdate:POSTBR:r.status_code:",r.status_code)
             print ("blynkStatusUpdate:POSTBR:r.text:",r.text)
@@ -415,7 +416,7 @@ def blynkStatusUpdate():
                 print ("blynkStatusUpdate:POSTBRC:state.runRainbow set to False")
 
         # turn OLED ON and OFF
-        r = requests.get(config.BLYNK_URL+config.BLYNK_AUTH+'/get/V6') # read button state
+        r = requests.get(config.BLYNK_URL+config.BLYNK_AUTH+'/get/V6', timeout=10) # read button state
         #if (config.DEBUGBLYNK):
 
         if (r.text == '["1"]'):
@@ -439,7 +440,7 @@ def blynkStatusUpdate():
                     util.turnOLEDOff()
 
         # look for Flash Strip Command
-        r = requests.get(config.BLYNK_URL+config.BLYNK_AUTH+'/get/V30') # read button state
+        r = requests.get(config.BLYNK_URL+config.BLYNK_AUTH+'/get/V30', timeout=10) # read button state
         if (config.DEBUGBLYNK):
             print ("blynkStatusUpdate:POSTBF:r.status_code:",r.status_code)
             print ("blynkStatusUpdate:POSTBF:r.text:",r.text)
@@ -461,7 +462,7 @@ def blynkStatusUpdate():
 
 def blynkSGSAppOnline():
     try:
-        r = requests.get(config.BLYNK_URL+config.BLYNK_AUTH+'/isAppConnected')
+        r = requests.get(config.BLYNK_URL+config.BLYNK_AUTH+'/isAppConnected', timeout=10)
         if (DEBUGBLYNK):
             print ("blynkSGSAppOnline:POSTCHECK:r.text:",r.text)
         return r.text
