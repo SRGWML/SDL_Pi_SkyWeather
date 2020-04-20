@@ -11,6 +11,9 @@
 <p><b>The below code will install all packages needed to run the SkyWeather code using Python 2.7 OR Python 3. If your wish is to use Python 3 only please omit all python-* packages and pip install* commands (i.e. Only install python3 packages and run pip3 commands).</b></p>
 
 <pre>
+sudo raspi-config
+
+<p><b>*THIS IS A COMMENT NOT A COMMAND TO EXECUTE: USe raspi-config via terminal or the GUI to enable: camera, ssh, vnc, spi, i2c, serial port. Enabling SSH and/or VNC is optional; SSH allows remote terminal sessions, VNC allows remote GUI sessions</b></p>
 
 sudo su
 
