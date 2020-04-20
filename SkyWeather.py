@@ -33,7 +33,7 @@ else:
     # original
     sys.path.append('./Adafruit_Python_BMP')
 
-sys.path.append('./Adafruit_Python_GPIO')
+# sys.path.append('./Adafruit_Python_GPIO')
 sys.path.append('./SDL_Pi_WeatherRack')
 sys.path.append('./RaspberryPi-AS3935/RPi_AS3935')
 sys.path.append('./SDL_Pi_INA3221')
@@ -1748,7 +1748,7 @@ if (config.runLEDs):
 
 # every 5 minutes, push data to mysql and check for shutdown
 
-if (config.WXLink_Present)or (config.SolarMAX_Present):
+if (config.WXLink_Present) or (config.SolarMAX_Present):
     scheduler.add_job(readLoRa.readRawWXLink, 'interval', seconds=15)
 
 if (config.enable_MySQL_Logging == True):
@@ -1766,8 +1766,9 @@ scheduler.add_job(checkForShutdown, 'interval', seconds=5*60)
 # every 15 minutes, build new graphs
 scheduler.add_job(doAllGraphs.doAllGraphs, 'interval', seconds=15*60)
 
-# every 30 minutes, check wifi connections
-scheduler.add_job(WLAN_check, 'interval', seconds=30*60)
+if (config.enable_WLAN_Detection == True):
+    # every 30 minutes, check wifi connections
+    scheduler.add_job(WLAN_check, 'interval', seconds=30*60)
 
 # every 5 days at 00:04, reboot
 scheduler.add_job(rebootPi, 'cron', day='5-30/5', hour=0, minute=4, args=["5 day Reboot"])
